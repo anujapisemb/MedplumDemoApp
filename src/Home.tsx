@@ -2,8 +2,8 @@ import { LoginAuthenticationResponse, getDisplayString, sleep } from '@medplum/c
 import { Patient } from '@medplum/fhirtypes';
 import { useMedplum, useMedplumContext, useMedplumProfile, useSubscription } from '@medplum/react-hooks';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
 import CustomButton from './CustomButton';
 
 export default function Home(): JSX.Element {
@@ -12,16 +12,13 @@ export default function Home(): JSX.Element {
   const { loading } = useMedplumContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [patients, setPatients] = useState<Patient[]>();
-  const PATIENT_REFERENCE = 'Patient/96037c7b-3dbe-448c-8b16-b7547ee0530f'; // Replace with your patient reference
-  const PRACTITIONER_REFERENCE = 'Practitioner/044fe3b6-38c2-44e8-b905-0c24ec901ee4'; // Replace with your practitioner reference
 
   function startLogin(): void {
     medplum
       .startLogin({
         email,
-        password,
-        projectId: 'fdf3e41c-9a91-4dac-90de-36482c8ada6e',
+        password,       
+        projectId: '<projectId>',
         remember: false,
         scope: 'offline',
       })
