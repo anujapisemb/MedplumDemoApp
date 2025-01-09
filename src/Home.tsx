@@ -1,8 +1,8 @@
-import { LoginAuthenticationResponse, getDisplayString } from '@medplum/core';
+import { LoginAuthenticationResponse, getDisplayString, sleep } from '@medplum/core';
 import { Patient } from '@medplum/fhirtypes';
 import { useMedplum, useMedplumContext, useMedplumProfile, useSubscription } from '@medplum/react-hooks';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import CustomButton from './CustomButton';
 
@@ -13,10 +13,20 @@ export default function Home(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [patients, setPatients] = useState<Patient[]>();
-  const [lastName, setLastName] = useState('');
+  const PATIENT_REFERENCE = 'Patient/96037c7b-3dbe-448c-8b16-b7547ee0530f'; // Replace with your patient reference
+  const PRACTITIONER_REFERENCE = 'Practitioner/044fe3b6-38c2-44e8-b905-0c24ec901ee4'; // Replace with your practitioner reference
 
   function startLogin(): void {
-    medplum.startLogin({ email, password }).then(handleAuthResponse).catch(console.error);
+    medplum
+      .startLogin({
+        email,
+        password,
+        projectId: 'fdf3e41c-9a91-4dac-90de-36482c8ada6e',
+        remember: false,
+        scope: 'offline',
+      })
+      .then(handleAuthResponse)
+      .catch(console.error);
   }
 
   function handleAuthResponse(response: LoginAuthenticationResponse): void {
@@ -41,25 +51,6 @@ export default function Home(): JSX.Element {
     medplum.signOut().catch(console.error);
   }
 
-  function createNewMary(): void {
-    medplum
-      .createResource<Patient>({
-        resourceType: 'Patient',
-        name: [
-          {
-            family: lastName !== '' ? lastName : 'Doe',
-            given: ['Mary'],
-          },
-        ],
-      })
-      .then((patient) => console.log('Patient created', patient))
-      .catch(console.error);
-    setLastName('');
-  }
-
-  function searchForMary(): void {
-    medplum.searchResources('Patient', 'name=Mary').then(setPatients).catch(console.error);
-  }
 
   return (
     <View style={styles.container}>
@@ -94,34 +85,11 @@ export default function Home(): JSX.Element {
               <Text style={styles.loginText}>Logged in as {getDisplayString(profile)}</Text>
               <CustomButton onPress={signOut} title="Sign out" />
               <View style={styles.marginTop10}>
-                <TextInput
-                  style={{ ...styles.input, marginTop: 10 }}
-                  placeholder="Mary's Last Name"
-                  placeholderTextColor="#003f5c"
-                  onChangeText={(lastName) => setLastName(lastName)}
-                  value={lastName}
+                <NotificationsWidgit
+                  title="Communication Received:"
+                  criteria={`Communication`}
                 />
-                <CustomButton onPress={createNewMary} title="Create New Mary" />
-                <CustomButton style={styles.marginTop10} onPress={searchForMary} title="Search for Mary" />
-                <ScrollView style={styles.scrollView}>
-                  <View style={styles.marginTop10}>
-                    {patients &&
-                      (patients.length ? (
-                        patients.map((patient) => {
-                          const lastName = patient.name?.[0]?.family;
-                          return (
-                            <Text key={patient.id as string} style={styles.name}>
-                              Mary {lastName}
-                            </Text>
-                          );
-                        })
-                      ) : (
-                        <Text>No patients with first name "Mary" found.</Text>
-                      ))}
-                  </View>
-                </ScrollView>
               </View>
-              <NotificationsWidgit title="New Marys created:" criteria="Patient?name=Mary" />
             </View>
           )}
           <StatusBar style="auto" />
@@ -139,10 +107,14 @@ interface NotificationsWidgitProps {
 function NotificationsWidgit(props: NotificationsWidgitProps): JSX.Element {
   const [notifications, setNotifications] = useState(0);
   const [reconnecting, setReconnecting] = useState(false);
+  const medplum = useMedplum();
 
   useSubscription(
     props.criteria,
-    () => {
+    (data) => {
+      console.log('message received',JSON.stringify(data));
+      
+
       setNotifications(notifications + 1);
     },
     {
@@ -154,6 +126,20 @@ function NotificationsWidgit(props: NotificationsWidgitProps): JSX.Element {
           setReconnecting(false);
         }
       }, [reconnecting]),
+      onSubscriptionConnect: useCallback(async (subscriptionId: any) => {
+        console.log('subscriptionId', subscriptionId);
+        try {
+          sleep(3000);
+          // let subscriptionRes = await medplum.searchResources('Subscription', `author=Patient/78f5bb86-db26-46ff-8876-3e2586bfd25f`);
+          // console.log('Subscription', subscriptionRes);
+          // let websocket =  await medplum.getSubscriptionManager()
+          // console.log('websocket', websocket);
+          let subscriptionRes = await medplum.readResource('Subscription', subscriptionId);
+          console.log('subscriptionRes', JSON.stringify(subscriptionRes));
+        } catch (error) {
+          console.log('Error ', error);
+        }
+      }, []),
     }
   );
 

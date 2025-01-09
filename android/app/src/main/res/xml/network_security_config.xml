@@ -1,0 +1,5 @@
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">wss://api-stage.healthconnect.systems/ws/subscriptions-r4</domain>
+    </domain-config>
+</network-security-config>
