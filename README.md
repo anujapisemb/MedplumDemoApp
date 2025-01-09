@@ -44,7 +44,7 @@ npm run start
 This app includes a very basic sign-in form that only supports email and password.
 
 # Medplum communication
-You can set communiation criteria In [`Home.tsx`](./src/App.tsx#L91) as Communication?recipient=Patient/${patientId} to get communication related to patient received on the specified communication criteria
+You can set communiation criteria In [`Home.tsx`](./src/Home.tsx#L91) as Communication?recipient=Patient/${patientId} to get communication related to patient received on the specified communication criteria
 
 # Testing communication 
 You can import below curl into postman to send communication to patient
